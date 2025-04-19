@@ -6,17 +6,17 @@ import ChatList from '../../components/chatList/ChatList';
 
 const DashboardLayout = () =>{
 
-    // const {userId, isLoaded} = useAuth()
+    const {userId, isLoaded} = useAuth()
 
-    // const navigate = useNavigate()
+    const navigate = useNavigate()
 
-    // useEffect(() => {
-    //     if(isLoaded && !userId){
-    //         navigate("/sign-in")
-    //    }
-    // },[isLoaded,userId,navigate])
+    useEffect(() => {
+        if(isLoaded && !userId){
+            navigate("/sign-in")
+       }
+    },[isLoaded,userId,navigate])
  
-    // if(!isLoaded) return "Loading..."
+    if(!isLoaded) return "Loading..."
 
     return(
         <div className='dashboardLayout'>
