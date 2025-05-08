@@ -5,13 +5,13 @@ import { useState } from 'react'
 
 const Homepage = () =>{
 
-    const [typingStatus, setTypingStatus] = useState("human1")
+    const [typingStatus, setTypingStatus] = useState("human1");
 
     return (
         <div className='homepage'>
             <img src="/orbital.png" alt="" className='orbital'/>
             <div className='left'>
-                <h1>RUSHI'S AI</h1>
+                <h1>RUSHI AI</h1>
                 <h2>Supercharge your creativity and productivity</h2>
                 <h3>Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloremque veritatis alias eveniet perspiciatis harum, 
                     quis laborum quisquam, quibusdam rem veniam obcaecati pariatur.</h3>

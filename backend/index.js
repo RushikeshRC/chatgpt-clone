@@ -1,11 +1,11 @@
-import express from "express"
+import express, { application } from "express"
 import path from "path"
 import cors from "cors"
 import ImageKit from "imagekit";
 import mongoose from "mongoose";
 import UserChats from "./models/userChats.js";
 import Chat from "./models/chat.js";
-import {requireAuth } from "@clerk/express";
+import {clerkMiddleware, requireAuth } from "@clerk/express";
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -14,6 +14,8 @@ app.use(cors({
     origin:process.env.CLIENT_URL,
     credentials: true
 }));
+
+app.use(clerkMiddleware());
 
 app.use(express.json())
 
@@ -37,9 +39,15 @@ app.get("/api/upload", (req, res)=>{
     res.send(result);
 });
 
+// app.get("/api/test",requireAuth(), (req,res) =>{
+//     const userId = req.auth.userId;  
+//     console.log(userId);
+//     res.send("success");
+// })
+
 app.post("/api/chats",requireAuth(), async (req, res)=>{
-    
-    const {userId, text} = req.body;
+    const userId = req.auth.userId;
+    const {text} = req.body;
 
     try {
         // CREATE A NEW CHAT
@@ -90,10 +98,68 @@ app.post("/api/chats",requireAuth(), async (req, res)=>{
     }
 });
 
-app.use((err,req,res,next) =>{
-    console.error(err.stack);
-    res.status(401).send('Unauthenticated!');
+app.get("/api/userchats", requireAuth(), async (req,res) =>{
+    const userId = req.auth.userId;
+    try {
+        const userChats = await UserChats.find({userId});
+        res.status(200).send(userChats[0].chats);        
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error fetching userchats..");
+    }
 });
+
+app.get("/api/chats/:id", requireAuth(), async (req,res) =>{
+    const userId = req.auth.userId;
+    try {
+        const chat = await Chat.findOne({_id: req.params.id, userId});
+        res.status(200).send(chat);        
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error fetching chat..");
+    }
+});
+
+app.put("/api/chats/:id", requireAuth(), async (req,res) =>{
+    const userId = req.auth.userId;
+
+    const {question, answer, img} = req.body;
+
+    const newItems = [
+        ...(question 
+            ? [{role: "user", parts: [{ text: question}], ...(img && {img})}]
+            : []),
+        {role: "model", parts: [{ text: answer}]},
+    ]
+
+    try {        
+        const updatedChat = await Chat.updateOne({_id: req.params.id, userId},{
+            $push:{
+                history:{
+                    $each: newItems,
+                },
+            },
+        });
+        res.status(200).send(updatedChat);        
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error adding conversations..");
+    }
+})
+
+// app.use((err,req,res,next) =>{
+//     console.error(err.stack);
+//     res.status(401).send('Unauthenticated!');
+// });
+
+const legacyRequireAuth = (req, res, next) => {
+    if (!req.auth.userId) {
+      return next(new Error('Unauthenticated'))
+    }
+    next()
+  }
+  app.get('/', legacyRequireAuth)
 
 app.listen(port,()=>{
     connect()
